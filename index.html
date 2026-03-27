@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Location Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #74ebd5, #acb6e5);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #coords {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    #log {
+      width: 90%;
+      max-width: 600px;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 8px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    #log div {
+      padding: 5px 0;
+      border-bottom: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>📍 Simple Location Tracker</h1>
+  <button onclick="startTracking()">Start Tracking</button>
+  <div id="coords"></div>
+  <div id="log"></div>
+
+  <script>
+    let watchId;
+
+    // Reverse geocode using OpenStreetMap Nominatim
+    async function getAddress(lat, lon) {
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+        const data = await response.json();
+        return data.display_name || 'Address not found';
+      } catch {
+        return 'Unable to fetch address';
+      }
+    }
+
+    function startTracking() {
+      if (navigator.geolocation) {
+        watchId = navigator.geolocation.watchPosition(
+          async position => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+
+            document.getElementById('coords').innerText = 
+              `Latitude: ${lat.toFixed(5)}, Longitude: ${lon.toFixed(5)}`;
+
+            const address = await getAddress(lat, lon);
+
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.textContent = `${time} → ${address}`;
+            logDiv.prepend(entry); // newest on top
+          },
+          error => {
+            alert("Unable to retrieve your location. Please allow location access.");
+          },
+          { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+        );
+      } else {
+        alert("Geolocation is not supported by your browser.");
+      }
+    }
+  </script>
+</body>
+</html>
